@@ -1,0 +1,45 @@
+version: '3.4'
+
+volumes:
+  revel-docker.db.volume:
+    name: revel-docker.db.volume
+
+services:
+  db:
+    build: ./mysql
+    container_name: revel-docker.db
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: test_db
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: root
+      TZ: 'Asia/Tokyo'
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/initdb:/docker-entrypoint-initdb.d
+    restart: always
+    ports:
+    - 3306:3306
+      
+  web:
+    build: ./web
+    container_name: revel-docker.web
+    ports:
+      - 9010:9010
+      - 2345:2345
+    volumes:
+      - ./code:/opt/go_lang/go/src/code
+    tty: true # 常時起動用設定
+    privileged: true
+    security_opt:
+      - apparmor:unconfined
+    cap_add:
+      - SYS_PTRACE
+    depends_on:
+      - db
